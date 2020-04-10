@@ -8,3 +8,9 @@ git clone https://github.com/kaipee/emby-server-upgrade.git
 sudo chmod +x emby-server-upgrade/emby-upgrade
 sudo ln -s $(pwd)/emby-server-upgrade/emby-upgrade /usr/local/bin/emby-upgrade
 ```
+
+## Usage
+
+```sh
+sudo emby-upgrade
+```
