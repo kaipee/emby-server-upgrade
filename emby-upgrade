@@ -38,7 +38,7 @@ fi
 
 # Stop the Emby Server
 printf "Shutting down Emby Server...\n"
-systemctl emby-server.service stop
+systemctl stop emby-server.service
 
 # Install the latest package
 printf "Installing ${package}\n"
@@ -60,5 +60,5 @@ ls -1dtr /opt/emby/packages/* | sort -n
 # Starting the Emby Server
 printf "Starting the Emby Server\n"
 systemctl --daemon-reload
-systemctl emby-server.service start
-systemctl emby-server.service status
+systemctl start emby-server.service
+systemctl status emby-server.service
