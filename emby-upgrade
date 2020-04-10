@@ -1,0 +1,64 @@
+#! /bin/bash
+# A Shell script to pull latest Emby Server stable deb package from Github and install it
+
+# Find the latest release version
+printf "Finding latest version of Emby Server from https://github.com/MediaBrowser/Emby.Releases/releases/latest\n"
+latest=$(curl -s https://api.github.com/repos/MediaBrowser/Emby.Releases/releases/latest | grep -E "tag_name" | cut -d ':' -f2 | tr -d ' '| tr -d '"' | tr -d ',')
+
+# Confirm we were able to retrieve details of the latest version
+if [[ -z "$latest" ]]; then
+  printf "Unable to retrieve latest version. Exiting...\n"
+  exit 1
+else
+  printf "Latest version : ${latest}\n"
+  package="emby-server-deb_${latest}_amd64.deb"
+fi
+
+# Create the Emby package directory if it doesn't exist
+if [[ ! -d /opt/emby/packages ]]; then
+  mkdir -p /opt/emby/packages
+fi
+
+# Check if latest version already exists
+if [[ -f /opt/emby/packages/${package} ]]; then
+  printf "Latest package already exists in /opt/emby/packages/${package}\n"
+  printf "Exiting...\n"
+  exit 1
+fi
+
+# Download the Debian package
+printf "Downloading to /opt/emby/packages/${package}\n"
+wget -q --show-progress -O "/opt/emby/packages/${package}" "https://github.com/MediaBrowser/Emby.Releases/releases/download/${latest}/${package}"
+
+# Confirm download successful
+if [[ ! -f /opt/emby/packages/${package} ]]; then
+  printf "Error, cannot find ${package} in /opt/emby/packages\n"
+  exit 1
+fi
+
+# Stop the Emby Server
+printf "Shutting down Emby Server...\n"
+systemctl emby-server.service stop
+
+# Install the latest package
+printf "Installing ${package}\n"
+dpkg -i "/opt/emby/packages/${package}"
+
+if [[ ! $? -eq 0 ]]; then
+  printf "Error installing ${package}\n"
+  printf "Exiting...\n"
+  exit 1
+fi
+
+# Clean up packages
+printf "Deleting all but last 2 packages\n"
+ls -1dtr /opt/emby/packages/* | sort -n |  head -n -2 | xargs -d '\n' rm -f --
+printf "Done\n"
+printf "Currently available packages:"
+ls -1dtr /opt/emby/packages/* | sort -n
+
+# Starting the Emby Server
+printf "Starting the Emby Server\n"
+systemctl --daemon-reload
+systemctl emby-server.service start
+systemctl emby-server.service status
